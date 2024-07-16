@@ -32,6 +32,7 @@ def save_image(image, path):
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
     
     # Download weights if not present
     weights_url = "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth"
@@ -55,28 +56,35 @@ def main():
         device=device
     )
 
-    # Load low-resolution image
-    print('Loading low-resolution image...')
-    input_image_path = "low_res_image.jpg"
-    output_image_path = "high_res_image.png"
-    low_res_image = load_image(input_image_path)
-    if low_res_image is None:
-        return
+    # Ensure input and output directories exist
+    input_dir = "input"
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)
 
-    # Upscale the image
-    print('Upscaling image...')
-    low_res_np = np.array(low_res_image)
-    high_res_np, _ = upsampler.enhance(low_res_np)
+    # Process each image in the input directory
+    for filename in os.listdir(input_dir):
+        input_image_path = os.path.join(input_dir, filename)
+        output_image_path = os.path.join(output_dir, filename)
 
-    # Convert numpy array to PIL Image
-    print('Converting numpy array to PIL Image...')
-    high_res_image = Image.fromarray(high_res_np.astype('uint8'))
+        if os.path.isfile(input_image_path):
+            print(f'Processing {input_image_path}...')
+            low_res_image = load_image(input_image_path)
+            if low_res_image is None:
+                continue
 
-    # Save the high-resolution image
-    print('Saving high-resolution image...')
-    save_image(high_res_image, output_image_path)
-    print(f"High-resolution image saved to {output_image_path}")
+            # Upscale the image
+            print('Upscaling image...' + filename)
+            low_res_np = np.array(low_res_image)
+            high_res_np, _ = upsampler.enhance(low_res_np)
+
+            # Convert numpy array to PIL Image
+            print('Converting numpy array to PIL Image...')
+            high_res_image = Image.fromarray(high_res_np.astype('uint8'))
+
+            # Save the high-resolution image
+            print(f'Saving high-resolution image to {output_image_path}...')
+            save_image(high_res_image, output_image_path)
+            print(f"High-resolution image saved to {output_image_path}")
 
 if __name__ == "__main__":
-    
     main()
