@@ -1,0 +1,5 @@
+# Ignore contents of the input folder
+/input/*
+
+# Ignore contents of the output folder
+/output/*
