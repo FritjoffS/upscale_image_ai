@@ -5,6 +5,8 @@ from realesrgan import RealESRGANer
 import torch
 import numpy as np
 from PIL import Image
+import tkinter as tk
+from tkinter import filedialog, messagebox
 
 def download_weights(url, save_path):
     if not os.path.exists(save_path):
@@ -30,7 +32,7 @@ def save_image(image, path):
     except Exception as e:
         print(f"Error saving image: {e}")
 
-def main():
+def process_images(input_dir, output_dir):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
     
@@ -40,7 +42,7 @@ def main():
     download_weights(weights_url, weights_path)
 
     # Initialize the RRDBNet model
-    print('Initializing RDBNet model...')
+    print('Initializing RRDBNet model...')
     model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
     
     # Initialize the RealESRGANer
@@ -56,9 +58,7 @@ def main():
         device=device
     )
 
-    # Ensure input and output directories exist
-    input_dir = "input"
-    output_dir = "output"
+    # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
     # Process each image in the input directory
@@ -86,5 +86,44 @@ def main():
             save_image(high_res_image, output_image_path)
             print(f"High-resolution image saved to {output_image_path}")
 
-if __name__ == "__main__":
-    main()
+    messagebox.showinfo("Info", "Image processing complete")
+
+def select_input_dir():
+    input_dir = filedialog.askdirectory()
+    if input_dir:
+        input_dir_var.set(input_dir)
+
+def start_processing():
+    input_dir = input_dir_var.get()
+    output_dir = output_dir_var.get()
+    if not input_dir:
+        messagebox.showwarning("Warning", "Please select an input directory")
+        return
+    if not output_dir:
+        messagebox.showwarning("Warning", "Please select an output directory")
+        return
+    process_images(input_dir, output_dir)
+
+def select_output_dir():
+    output_dir = filedialog.askdirectory()
+    if output_dir:
+        output_dir_var.set(output_dir)
+
+# Initialize the GUI application
+app = tk.Tk()
+app.title("Image Super-Resolution with RealESRGAN")
+
+input_dir_var = tk.StringVar()
+output_dir_var = tk.StringVar()
+
+tk.Label(app, text="Input Directory:").grid(row=0, column=0, padx=10, pady=10)
+tk.Entry(app, textvariable=input_dir_var, width=50).grid(row=0, column=1, padx=10, pady=10)
+tk.Button(app, text="Browse", command=select_input_dir).grid(row=0, column=2, padx=10, pady=10)
+
+tk.Label(app, text="Output Directory:").grid(row=1, column=0, padx=10, pady=10)
+tk.Entry(app, textvariable=output_dir_var, width=50).grid(row=1, column=1, padx=10, pady=10)
+tk.Button(app, text="Browse", command=select_output_dir).grid(row=1, column=2, padx=10, pady=10)
+
+tk.Button(app, text="Start Processing", command=start_processing).grid(row=2, column=0, columnspan=3, pady=20)
+
+app.mainloop()
